@@ -1,0 +1,35 @@
+image: docker:dind
+services:
+  - docker:dind
+  
+variables:
+  SPRING_PROFILES_ACTIVE: gitlab-ci
+  DOCKER_DRIVER: overlay2
+
+stages:
+  - build
+  - test
+  - package
+  
+build:
+  image: azul/zulu-openjdk-alpine:11
+  stage: build
+  script: 
+    - ./gradlew build -x test
+    - ./gradlew --stop
+    - echo "Build Completed UwU"
+  artifacts:
+    paths:
+      - build/libs/*.jar
+
+docker:
+   stage: package
+   variables:
+     IMAGE_NAME: "watchlist_backend"
+   image: docker
+   services:
+    - docker:dind
+   script:
+    - docker build -t thebookthief/$IMAGE_NAME .
+    - docker login -u thebookthief -p $Docker_Hub_Token
+    - docker push thebookthief/$IMAGE_NAME
